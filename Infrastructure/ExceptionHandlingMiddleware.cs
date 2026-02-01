@@ -5,11 +5,9 @@ using System.Text.Json;
 
 namespace McpWeatherServer.Infrastructure;
 
-/// <summary>
 /// Catches unhandled exceptions, logs them, and returns:
 /// - JSON-RPC style error envelope for /mcp
 /// - ProblemDetails for other endpoints
-/// </summary>
 public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
 {
     public async Task Invoke(HttpContext context)

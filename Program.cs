@@ -49,7 +49,7 @@ builder.Services.AddOpenTelemetry()
         .AddConsoleExporter());
 
 // -------------------------
-// Typed+Named resilient HttpClient using your template
+// Typed+Named resilient HttpClient
 // -------------------------
 builder.Services.AddResilientHttpClient<IOpenMeteoApiClient, OpenMeteoApiClient>(
     builder.Configuration,
@@ -72,7 +72,6 @@ var app = builder.Build();
 
 // -------------------------
 // Middleware pipeline
-// (order matters: exception handling should be early)
 // -------------------------
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseMiddleware<RequestTimingMiddleware>();
