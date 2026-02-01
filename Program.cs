@@ -1,7 +1,20 @@
 using McpWeatherServer.Infrastructure;
 using McpWeatherServer.Services;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Serilog;
+using Serilog.Enrichers.Span;
 
 var builder = WebApplication.CreateBuilder(args);
+
+//var configuration = new ConfigurationBuilder()
+//            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+//            .Build();
 
 // -------------------------
 // Serilog file logging + trace/span enrichment
@@ -18,24 +31,6 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 builder.Host.UseSerilog();
-
-// -------------------------
-// Options binding (from appsettings.json)
-// -------------------------
-builder.Services.AddOptions<CircuitBreakerPolicyOptions>()
-    .Bind(builder.Configuration.GetSection(CircuitBreakerPolicyOptions.SectionName))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
-
-builder.Services.AddOptions<RetryPolicyOptions>()
-    .Bind(builder.Configuration.GetSection(RetryPolicyOptions.SectionName))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
-
-builder.Services.AddOptions<TotalRequestTimeoutPolicyOptions>()
-    .Bind(builder.Configuration.GetSection(TotalRequestTimeoutPolicyOptions.SectionName))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
 
 // -------------------------
 // Service discovery core registration
@@ -62,6 +57,7 @@ builder.Services.AddOpenTelemetry()
 // Typed+Named resilient HttpClient using your template (NO Polly)
 // -------------------------
 builder.Services.AddResilientHttpClient<IOpenMeteoApiClient, OpenMeteoApiClient>(
+    builder.Configuration,
     clientName: ConfigurationConstants.ServiceDiscoveryClientName,
     configureClient: client =>
     {
@@ -75,7 +71,7 @@ builder.Services.AddResilientHttpClient<IOpenMeteoApiClient, OpenMeteoApiClient>
 // -------------------------
 builder.Services
     .AddMcpServer()
-    .WithHttpTransport()
+    .WithHttpTransport(options => options.Stateless = true)
     .WithToolsFromAssembly();
 
 var app = builder.Build();

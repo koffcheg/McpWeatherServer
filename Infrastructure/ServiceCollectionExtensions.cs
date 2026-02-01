@@ -1,4 +1,5 @@
 ﻿using McpWeatherServer.Infrastructure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -7,6 +8,7 @@ public static class ServiceCollectionExtensions
 {
     public static IHttpClientBuilder AddResilientHttpClient<TClient, TImplementation>(
         this IServiceCollection services,
+        IConfiguration configuration,
         string clientName,
         Action<HttpClient>? configureClient = null)
         where TClient : class
@@ -24,18 +26,17 @@ public static class ServiceCollectionExtensions
         })
             .AddServiceDiscovery();
 
-        builder.AddStandardResilienceHandler((sp, options) =>
+        builder.AddStandardResilienceHandler(options =>
         {
-            var breaker = sp.GetRequiredService<IOptions<CircuitBreakerPolicyOptions>>().Value;
-            var retry = sp.GetRequiredService<IOptions<RetryPolicyOptions>>().Value;
-            var timeout = sp.GetRequiredService<IOptions<TotalRequestTimeoutPolicyOptions>>().Value;
 
-            options.Retry.MaxRetryAttempts = retry.RetryCount;
+           // var resilienceOptions = configuration.GetSection(ResilienceOptions.SectionName).Get<ResilienceOptions>();
+
+            options.Retry.MaxRetryAttempts = 3;
 
             // Your earlier template used SamplingDuration; we keep it exactly as requested.
-            options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(breaker.BreakDurationSeconds);
+            options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(30);
 
-            options.TotalRequestTimeout.Timeout = timeout.Timeout;
+            options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(15);
         });
 
         return builder;

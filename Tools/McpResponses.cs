@@ -12,22 +12,34 @@ public static class McpResponses
             IsError = false,
             Content =
             [
-                new TextContentBlock { Type = "text", Text = JsonSerializer.Serialize(data) }
+                new TextContentBlock
+                {
+                    // Type is read-only in this SDK; it's implicitly "text"
+                    Text = JsonSerializer.Serialize(data)
+                }
             ]
         };
 
     public static CallToolResult ToolError(Error err, object? details = null)
     {
-        var payload = details is null
-            ? new { code = err.Code, message = err.Message }
-            : new { code = err.Code, message = err.Message, details };
+        var payload = new Dictionary<string, object?>
+        {
+            ["code"] = err.Code,
+            ["message"] = err.Message
+        };
+
+        if (details is not null)
+            payload["details"] = details;
 
         return new CallToolResult
         {
             IsError = true,
             Content =
             [
-                new TextContentBlock { Type = "text", Text = JsonSerializer.Serialize(payload) }
+                new TextContentBlock
+                {
+                    Text = JsonSerializer.Serialize(payload)
+                }
             ]
         };
     }
