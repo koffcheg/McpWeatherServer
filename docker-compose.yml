@@ -1,0 +1,11 @@
+services:
+  mcp-weather:
+    build:
+      context: .
+    ports:
+      - "5000:8080"
+    environment:
+      ASPNETCORE_URLS: "http://+:8080"
+      DOTNET_ENVIRONMENT: "Development"
+    volumes:
+      - ./container-logs:/app/logs

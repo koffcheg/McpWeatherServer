@@ -20,18 +20,15 @@ public sealed class ExceptionHandlingMiddleware(RequestDelegate next, ILogger<Ex
         }
         catch (Exception ex)
         {
-            // Never leak internals to callers
             logger.LogError(ex, "Unhandled exception while processing request.");
 
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
 
-            // If response already started, can't write body
             if (context.Response.HasStarted)
                 return;
 
             if (context.Request.Path.StartsWithSegments("/mcp"))
             {
-                // Best-effort JSON-RPC error envelope (Internal error)
                 // We don't know the original request id at this layer, so id=null.
                 context.Response.ContentType = "application/json";
 

@@ -1,0 +1,25 @@
+# .NET build artifacts
+bin/
+obj/
+
+# User-specific files
+.vs/
+.vscode/
+
+# Logs (host-side)
+logs/
+container-logs/
+
+# Git
+.git/
+.gitignore
+
+# Docker artifacts
+Dockerfile
+docker-compose.yml
+
+# OS noise
+*.user
+*.suo
+*.tmp
+*.log

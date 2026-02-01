@@ -53,4 +53,10 @@
 	  <PackageReference Include="Serilog.Enrichers.Span" Version="*" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

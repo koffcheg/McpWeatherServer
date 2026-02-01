@@ -2,7 +2,6 @@ using McpWeatherServer.Infrastructure;
 using McpWeatherServer.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -12,9 +11,6 @@ using Serilog.Enrichers.Span;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//var configuration = new ConfigurationBuilder()
-//            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-//            .Build();
 
 // -------------------------
 // Serilog file logging + trace/span enrichment
@@ -22,9 +18,9 @@ var builder = WebApplication.CreateBuilder(args);
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .Enrich.FromLogContext()
-    .Enrich.WithSpan() // adds TraceId/SpanId to logs
+    .Enrich.WithSpan()
     .WriteTo.File(
-        path: "logs/app-.json",
+        path: "../../../../logs/app-.json",
         rollingInterval: RollingInterval.Day,
         formatter: new Serilog.Formatting.Json.JsonFormatter())
     .WriteTo.Console()
@@ -45,7 +41,6 @@ builder.Services.AddOpenTelemetry()
         .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("mcp-weather"))
         .AddAspNetCoreInstrumentation()
         .AddHttpClientInstrumentation()
-        // Console exporter is fine for local debugging; keep OTLP for later backends.
         .AddConsoleExporter())
     .WithMetrics(m => m
         .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("mcp-weather"))
@@ -54,14 +49,13 @@ builder.Services.AddOpenTelemetry()
         .AddConsoleExporter());
 
 // -------------------------
-// Typed+Named resilient HttpClient using your template (NO Polly)
+// Typed+Named resilient HttpClient using your template
 // -------------------------
 builder.Services.AddResilientHttpClient<IOpenMeteoApiClient, OpenMeteoApiClient>(
     builder.Configuration,
     clientName: ConfigurationConstants.ServiceDiscoveryClientName,
     configureClient: client =>
     {
-        // External API: override logical https+http://{clientName} with real endpoint
         client.BaseAddress = new Uri("https://api.open-meteo.com/");
         client.DefaultRequestHeaders.UserAgent.ParseAdd("mcp-weather/1.0");
     });

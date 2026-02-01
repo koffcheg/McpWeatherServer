@@ -1,4 +1,6 @@
 ﻿using McpWeatherServer.Domain;
+using Microsoft.Extensions.Logging;
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
@@ -10,7 +12,7 @@ public interface IOpenMeteoApiClient
     Task<Result<TodayWeatherResult>> GetTodayAsync(double latitude, double longitude, string timezone, CancellationToken ct);
 }
 
-public sealed class OpenMeteoApiClient(HttpClient http) : IOpenMeteoApiClient
+public sealed class OpenMeteoApiClient(HttpClient http, ILogger<OpenMeteoApiClient> logger) : IOpenMeteoApiClient
 {
     public async Task<Result<TodayWeatherResult>> GetTodayAsync(
         double latitude,
@@ -18,11 +20,16 @@ public sealed class OpenMeteoApiClient(HttpClient http) : IOpenMeteoApiClient
         string timezone,
         CancellationToken ct)
     {
+        var lat = latitude.ToString("F6", CultureInfo.InvariantCulture);
+        var lon = longitude.ToString("F6", CultureInfo.InvariantCulture);
+
         var path =
             "v1/forecast" +
-            $"?latitude={latitude}&longitude={longitude}" +
+            $"?latitude={lat}&longitude={lon}" +
             "&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max" +
             $"&timezone={Uri.EscapeDataString(timezone)}";
+
+        logger.LogInformation("OpenMeteo API request: {Path}", path);
 
         HttpResponseMessage res;
         try
